@@ -1,5 +1,6 @@
 import psycopg2 as pg
 from datetime import datetime
+from pprint import pprint
 
 PARAMS = {'database': 'netology_db',
         'user': 'netology_user',
@@ -10,9 +11,12 @@ PARAMS = {'database': 'netology_db',
 
 student = {'name': 'bob', 'gpa': 5.56, 'birth': '1988-01-31'}
 
-# cur.execute("""
-# insert into Course(course_id, course_name) values(%s, %s);
-# """, ('1', 'Python'))
+def create_course():
+    with pg.connect(**PARAMS) as connect:
+        cur = connect.cursor()
+        cur.execute("""
+        insert into Course(course_id, course_name) values(%s, %s);
+        """, ('1', 'Python'))
 
 
 def create_db():  # создает таблицы
@@ -57,18 +61,32 @@ def get_students(course_id):  # возвращает студентов опре
 def add_students(course_id, students):  # создает студентов и записывает их на курс
     with pg.connect(**PARAMS) as connect:
         cur = connect.cursor()
-    pass
+        for data in students:
+            cur.execute("insert into Student(name, gpa, birth) values (%s, %s, %s) returning student_id;",
+                        (data.get('name'), data.get('gpa'), data.get('birth')))
+            students_id = cur.fetchone()
+            cur.execute("select student_id, name from Student left join Course on Student.student_id = Course.course_id")
+            # cur.execute("insert into тут создать новую таблицу? (student_id, course_id) values (%s, %s)",
+            #              (students_id, course_id))
 
-# def get_all():
-#     with pg.connect(**PARAMS) as connect:
-#         cur = connect.cursor()
-#         cur.execute('''
-#         select * from Student''')
-#     print(cur.fetchall())
+
+def get_all():
+    with pg.connect(**PARAMS) as connect:
+        cur = connect.cursor()
+        cur.execute('''
+        select * from Student''')
+    pprint(cur.fetchall())
+
 
 if __name__ == '__main__':
+    # create_course()
 
     student = {'name': 'bob', 'gpa': 5.56, 'birth': '1988-01-31'}
     #add_student(student)
-    # get_all()
-    get_student(9)
+    get_all()
+    # get_student(9)
+    students = [{'name': 'bob', 'gpa': 5.56, 'birth': '1988-01-31'},
+                {'name': 'barbara', 'gpa': 2.32, 'birth': '1990-05-11'},
+                {'name': 'frank', 'gpa': 4.89, 'birth': '1982-08-21'},
+                ]
+    add_students(1, students)
