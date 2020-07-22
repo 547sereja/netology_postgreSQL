@@ -62,7 +62,10 @@ def get_students(course_id):  # возвращает студентов опре
     with pg.connect(**PARAMS) as connect:
         cur = connect.cursor()
         cur.execute('''
-        select * from Course where course_id=%s;''', (course_id,))
+        select name, student_id from Student
+        inner join Course
+        on Student.student_id = Course.course_id
+        where course_id=%s;''', (course_id,))
     print(cur.fetchall())
 
 
@@ -100,3 +103,4 @@ if __name__ == '__main__':
                 {'name': 'frank', 'gpa': 4.89, 'birth': '1982-08-21'},
                 ]
     add_students(1, students)
+    get_students(1)
