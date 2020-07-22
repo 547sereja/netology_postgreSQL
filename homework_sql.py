@@ -33,6 +33,14 @@ def create_db():  # создает таблицы
         create table if not exists Course(course_id serial primary key not null,
         course_name varchar(100) not null);''')
 
+        cur.execute("""create table if not exist student_course (
+                id serial primary key,
+                student_id integer references Student(student_id),
+                course_id integer references  Course(course_id));
+                """)
+        # cur.execute('''
+        # select * from Student left join Course on Student.student_id = Course.course_id''')
+# create_db()
 
 def add_student(student):  # просто создает студента
     with pg.connect(**PARAMS) as connect:
@@ -61,13 +69,15 @@ def get_students(course_id):  # возвращает студентов опре
 def add_students(course_id, students):  # создает студентов и записывает их на курс
     with pg.connect(**PARAMS) as connect:
         cur = connect.cursor()
-        for data in students:
-            cur.execute("insert into Student(name, gpa, birth) values (%s, %s, %s) returning student_id;",
-                        (data.get('name'), data.get('gpa'), data.get('birth')))
-            students_id = cur.fetchone()
-            cur.execute("select student_id, name from Student left join Course on Student.student_id = Course.course_id")
-            # cur.execute("insert into тут создать новую таблицу? (student_id, course_id) values (%s, %s)",
-            #              (students_id, course_id))
+        if course_id:
+            for data in students:
+                cur.execute("insert into Student(name, gpa, birth) values (%s, %s, %s) returning student_id;",
+                            (data.get('name'), data.get('gpa'), data.get('birth')))
+                students_id = cur.fetchone()
+                cur.execute("insert into student_course (student_id, course_id) values (%s, %s)",
+                            (students_id, course_id))
+        else:
+            print("It seems we don't have such course:(")
 
 
 def get_all():
